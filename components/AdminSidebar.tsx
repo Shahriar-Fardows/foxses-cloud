@@ -2,13 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { FiHome, FiUsers, FiDollarSign, FiMessageSquare, FiSettings, FiLogOut } from "react-icons/fi";
+import { FiHome, FiUsers, FiDollarSign, FiMessageSquare, FiSettings, FiLogOut, FiTag, FiTrendingUp } from "react-icons/fi";
 
 const links = [
   { href: "/admin/dashboard", label: "Dashboard", icon: FiHome },
   { href: "/admin/clients", label: "Clients", icon: FiUsers },
   { href: "/admin/recharge-requests", label: "Recharge Requests", icon: FiDollarSign },
   { href: "/admin/sms-logs", label: "SMS Logs", icon: FiMessageSquare },
+  { href: "/admin/pricing", label: "Pricing", icon: FiTag },
+  { href: "/admin/profit-report", label: "Profit Report", icon: FiTrendingUp },
   { href: "/admin/staff", label: "Staff", icon: FiSettings },
 ];
 

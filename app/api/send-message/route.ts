@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Client from "@/models/Client";
 import SmsLog from "@/models/SmsLog";
-import { isValidPhone, parseRecipients, SMS_COST_PER_MESSAGE, GATEWAYS } from "@/lib/sms";
+import { isValidPhone, parseRecipients, countSegments, GATEWAYS } from "@/lib/sms";
 import { checkLowBalanceAlert } from "@/lib/balanceAlerts";
 import { sendViaUpstream } from "@/lib/smsProvider";
+import { getPricing, getPriceForType } from "@/lib/pricing";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -57,7 +58,13 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const totalCost = recipients.length * SMS_COST_PER_MESSAGE;
+  const pricing = await getPricing();
+  const { buyPrice, sellPrice } = getPriceForType(pricing, client.messageType);
+  const segments = countSegments(message);
+  const costPerRecipient = segments * sellPrice;
+  const buyCostPerRecipient = segments * buyPrice;
+  const totalCost = recipients.length * costPerRecipient;
+
   if (client.balance < totalCost) {
     return NextResponse.json(
       { response_code: 2003, message: "Insufficient balance." },
@@ -88,7 +95,9 @@ export async function POST(request: NextRequest) {
       senderId: sender_id,
       endpoint: "send-message",
       status: "sent",
-      cost: SMS_COST_PER_MESSAGE,
+      segments,
+      cost: costPerRecipient,
+      buyCost: buyCostPerRecipient,
       gatewayUsed,
       messageType: client.messageType,
     }))
