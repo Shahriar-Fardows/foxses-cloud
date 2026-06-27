@@ -12,26 +12,35 @@ type RechargeRequest = {
   createdAt: string;
 };
 
+const MIN_RECHARGE_AMOUNT = 500;
+
 export default function PurchasePage() {
   const router = useRouter();
   const [amount, setAmount] = useState("");
   const [requests, setRequests] = useState<RechargeRequest[]>([]);
-
-  async function loadRequests() {
-    const res = await fetch("/api/client/recharge");
-    if (res.ok) {
-      const data = await res.json();
-      setRequests(data.requests);
-    }
-  }
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    loadRequests();
+    (async () => {
+      const res = await fetch("/api/client/recharge");
+      if (res.ok) {
+        const data = await res.json();
+        setRequests(data.requests);
+      }
+    })();
   }, []);
 
   const handleMakePayment = (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
     if (!amount || Number(amount) <= 0) return;
+
+    if (Number(amount) < MIN_RECHARGE_AMOUNT) {
+      setError(`Minimum recharge amount is ${MIN_RECHARGE_AMOUNT}tk`);
+      return;
+    }
+
     router.push(`/dashboard/purchase/verify?amount=${amount}`);
   };
 
@@ -59,8 +68,17 @@ export default function PurchasePage() {
                 placeholder="e.g. 500"
                 required
               />
+              <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--text-secondary)" }}>
+                Minimum recharge amount is {MIN_RECHARGE_AMOUNT}tk
+              </p>
             </div>
-            
+
+            {error && (
+              <div style={{ color: "#ef4444", fontSize: "0.9rem", marginBottom: "1rem", textAlign: "center", backgroundColor: "#fef2f2", padding: "0.5rem", borderRadius: "6px" }}>
+                {error}
+              </div>
+            )}
+
             <button type="submit" className="btn btn-primary" style={{ width: "100%" }}>
               Make Payment
             </button>
